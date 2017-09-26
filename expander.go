@@ -1,6 +1,7 @@
 package exenv
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"sync"
@@ -21,7 +22,14 @@ func (ex *expander) Lookup(key string) (string, error) {
 	}
 	switch ex.prefix(v) {
 	case "consul:":
-		return ex.queryConsul(v[7:])
+		s, err := ex.queryConsul(v[7:])
+		if ok, k2 := IsNotFound(err); ok {
+			return "", fmt.Errorf("consul: not found key %q for %s", k2, key)
+		}
+		if err != nil {
+			return "", err
+		}
+		return s, nil
 	case "raw:":
 		return v[4:], nil
 	default:
